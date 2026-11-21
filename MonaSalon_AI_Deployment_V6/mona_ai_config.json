@@ -1,0 +1,42 @@
+{
+    "project": "Mona Salon",
+    "model_name": "EfficientNet-B4 V6",
+    "model_file": "mona_efficientnet_b4_v6_best.pth",
+    "detector_file": "blaze_face_short_range.tflite",
+    "classes": [
+        "Heart",
+        "Oblong",
+        "Oval",
+        "Round",
+        "Square"
+    ],
+    "input_size": [
+        380,
+        380
+    ],
+    "normalization": {
+        "mean": [
+            0.485,
+            0.456,
+            0.406
+        ],
+        "std": [
+            0.229,
+            0.224,
+            0.225
+        ]
+    },
+    "face_crop": {
+        "margin_x": 0.3,
+        "margin_y": 0.35,
+        "selection": "largest_bounding_box",
+        "resize": "bilinear",
+        "exif_transpose": true
+    },
+    "test_accuracy": 0.705,
+    "test_macro_f1": 0.704575,
+    "confidence_threshold": {
+        "value": 0.6,
+        "status": "experimental_not_calibrated"
+    }
+}
