@@ -111,13 +111,6 @@ export function CameraModal({ onClose, onCaptured }: CameraModalProps) {
         >
           📸 Ambil Foto Sekarang
         </button>
-        <button
-          type="button"
-          onClick={() => capture(false)}
-          className="h-[38px] w-full rounded-full bg-[#E04C5B] font-body text-xs font-semibold text-white transition hover:opacity-95"
-        >
-          Simulasi Foto Buram / Wajah Tidak Terdeteksi
-        </button>
       </div>
     </div>
   );

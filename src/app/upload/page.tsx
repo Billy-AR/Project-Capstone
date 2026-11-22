@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { TopBar } from "@/components/ui/TopBar";
 import { CameraModal } from "@/components/ui/CameraModal";
 import {
-  DEFAULT_USER_PHOTO,
   readFileAsDataUrl,
   storeInvalidSimulation,
   storePhoto,
@@ -94,32 +93,6 @@ export default function UploadPage() {
           >
             Pilih dari Galeri
           </button>
-          {/* Quick Demo Action Links so user can test default portrait or invalid photo right away */}
-          <div className="mt-2.5 flex items-center justify-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                storePhoto(DEFAULT_USER_PHOTO);
-                storeInvalidSimulation(false);
-                router.push("/preview");
-              }}
-              className="text-[11px] text-[#6B4035] underline hover:text-[#35231E]"
-            >
-              Pakai Foto Contoh (Valid)
-            </button>
-            <span className="text-[#C9B5A7]">•</span>
-            <button
-              type="button"
-              onClick={() => {
-                storePhoto(DEFAULT_USER_PHOTO);
-                storeInvalidSimulation(true);
-                router.push("/scan");
-              }}
-              className="text-[11px] text-[#E04C5B] underline hover:opacity-80"
-            >
-              Simulasi Wajah Tidak Terdeteksi
-            </button>
-          </div>
         </div>
 
         {/* Card 3: Tips Foto yang Baik */}
