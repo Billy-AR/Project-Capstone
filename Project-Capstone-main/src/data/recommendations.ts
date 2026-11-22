@@ -185,8 +185,8 @@ export const RECOMMENDATIONS: Recommendation[] = [
       "Tata layer depan agar jatuh membingkai tulang pipi",
     ],
     matchScore: 94,
-    previewImage: "/assets/style-layer-cut.jpg",
-    detailImage: "/assets/style-layer-cut.jpg",
+    previewImage: "/assets/style-round-curtain-layer.jpg",
+    detailImage: "/assets/style-round-curtain-layer.jpg",
   },
   {
     id: "round-soft-waves",
@@ -217,8 +217,8 @@ export const RECOMMENDATIONS: Recommendation[] = [
       "Aplikasikan sea salt spray untuk tekstur ringan",
     ],
     matchScore: 91,
-    previewImage: "/assets/style-long-wave.jpg",
-    detailImage: "/assets/style-long-wave.jpg",
+    previewImage: "/assets/style-round-soft-waves.jpg",
+    detailImage: "/assets/style-round-soft-waves.jpg",
   },
   {
     id: "round-face-framing",
@@ -248,8 +248,8 @@ export const RECOMMENDATIONS: Recommendation[] = [
       "Gunakan serum anti-frizz agar layer tetap rapi",
     ],
     matchScore: 88,
-    previewImage: "/assets/style-hime-cut.jpg",
-    detailImage: "/assets/style-hime-cut.jpg",
+    previewImage: "/assets/style-round-face-framing.jpg",
+    detailImage: "/assets/style-round-face-framing.jpg",
   },
 
   // --- SQUARE (PERSEGI) ---
@@ -281,8 +281,8 @@ export const RECOMMENDATIONS: Recommendation[] = [
       "Sisir gelombang dengan jari agar tidak kaku",
     ],
     matchScore: 95,
-    previewImage: "/assets/style-long-wave.jpg",
-    detailImage: "/assets/style-long-wave.jpg",
+    previewImage: "/assets/style-square-soft-waves.jpg",
+    detailImage: "/assets/style-square-soft-waves.jpg",
   },
   {
     id: "square-feathered-cut",
@@ -312,8 +312,8 @@ export const RECOMMENDATIONS: Recommendation[] = [
       "Gunakan hair oil ringan pada ujung rambut",
     ],
     matchScore: 90,
-    previewImage: "/assets/style-layer-cut.jpg",
-    detailImage: "/assets/style-layer-cut.jpg",
+    previewImage: "/assets/style-square-feathered-cut.jpg",
+    detailImage: "/assets/style-square-feathered-cut.jpg",
   },
   {
     id: "square-side-swept",
@@ -343,8 +343,8 @@ export const RECOMMENDATIONS: Recommendation[] = [
       "Kunci volume akar dengan light hold hairspray",
     ],
     matchScore: 87,
-    previewImage: "/assets/style-hime-cut.jpg",
-    detailImage: "/assets/style-hime-cut.jpg",
+    previewImage: "/assets/style-square-side-swept.jpg",
+    detailImage: "/assets/style-square-side-swept.jpg",
   },
 
   // --- HEART (HATI) ---
@@ -376,8 +376,8 @@ export const RECOMMENDATIONS: Recommendation[] = [
       "Biarkan bagian atas rambut tetap ramping",
     ],
     matchScore: 94,
-    previewImage: "/assets/style-long-wave.jpg",
-    detailImage: "/assets/style-long-wave.jpg",
+    previewImage: "/assets/style-heart-volume-waves.jpg",
+    detailImage: "/assets/style-heart-volume-waves.jpg",
   },
   {
     id: "heart-curtain-layer",
@@ -407,8 +407,8 @@ export const RECOMMENDATIONS: Recommendation[] = [
       "Gunakan dry shampoo untuk menjaga poni tetap bervolume",
     ],
     matchScore: 91,
-    previewImage: "/assets/style-layer-cut.jpg",
-    detailImage: "/assets/style-layer-cut.jpg",
+    previewImage: "/assets/style-heart-curtain-layer.jpg",
+    detailImage: "/assets/style-heart-curtain-layer.jpg",
   },
   {
     id: "heart-chin-framing",
@@ -438,8 +438,8 @@ export const RECOMMENDATIONS: Recommendation[] = [
       "Gunakan styling cream untuk hasil berkilau",
     ],
     matchScore: 88,
-    previewImage: "/assets/style-hime-cut.jpg",
-    detailImage: "/assets/style-hime-cut.jpg",
+    previewImage: "/assets/style-heart-chin-framing.jpg",
+    detailImage: "/assets/style-heart-chin-framing.jpg",
   },
 
   // --- OBLONG (LONJONG) ---
@@ -471,8 +471,8 @@ export const RECOMMENDATIONS: Recommendation[] = [
       "Blow dry dengan kepala terbalik untuk volume samping maksimal",
     ],
     matchScore: 95,
-    previewImage: "/assets/style-long-wave.jpg",
-    detailImage: "/assets/style-long-wave.jpg",
+    previewImage: "/assets/style-oblong-volume-waves.jpg",
+    detailImage: "/assets/style-oblong-volume-waves.jpg",
   },
   {
     id: "oblong-curtain-layer",
@@ -502,8 +502,8 @@ export const RECOMMENDATIONS: Recommendation[] = [
       "Tata layer samping mengembang natural",
     ],
     matchScore: 92,
-    previewImage: "/assets/style-layer-cut.jpg",
-    detailImage: "/assets/style-layer-cut.jpg",
+    previewImage: "/assets/style-oblong-curtain-layer.jpg",
+    detailImage: "/assets/style-oblong-curtain-layer.jpg",
   },
   {
     id: "oblong-side-fringe",
@@ -533,8 +533,8 @@ export const RECOMMENDATIONS: Recommendation[] = [
       "Biarkan acak natural untuk gaya kasual",
     ],
     matchScore: 87,
-    previewImage: "/assets/style-hime-cut.jpg",
-    detailImage: "/assets/style-hime-cut.jpg",
+    previewImage: "/assets/style-oblong-side-fringe.jpg",
+    detailImage: "/assets/style-oblong-side-fringe.jpg",
   },
 ];
 

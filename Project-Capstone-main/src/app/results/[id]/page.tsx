@@ -1,13 +1,19 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { TopBar } from "@/components/ui/TopBar";
+import { PredictionResult, readPrediction } from "@/lib/photo";
 import {
+  HairLength,
+  HairTexture,
   RECOMMENDATIONS,
   getRecommendationById,
-  getRecommendationsForFaceShape,
 } from "@/data/recommendations";
+import {
+  rankRecommendations,
+  ScoredRecommendation,
+} from "@/lib/recommendationEngine";
 
 const attributeRows = [
   {
@@ -74,19 +80,50 @@ export default function RecommendationDetailPage() {
 function DetailContent() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const id = String(params.id);
 
+  const [prediction, setPrediction] = useState<PredictionResult | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  useEffect(() => {
+    const data = readPrediction();
+    if (data) {
+      setPrediction(data);
+    }
+  }, []);
+
   const currentItem = getRecommendationById(id) || RECOMMENDATIONS[0];
-  const group = getRecommendationsForFaceShape(currentItem.faceShape);
+
+  const hairLength = (searchParams.get("length") as HairLength | "any") || "any";
+  const hairTexture = (searchParams.get("texture") as HairTexture | "any") || "any";
+
+  const faceShape = prediction?.face_shape || currentItem.faceShape;
+  const confidencePercent = prediction
+    ? prediction.confidence <= 1
+      ? Math.round(prediction.confidence * 100)
+      : Math.round(prediction.confidence)
+    : 94;
+
+  // Hitung skor menggunakan engine yang sama persis dengan halaman results
+  const rankedRecommendations: ScoredRecommendation[] = rankRecommendations(
+    faceShape,
+    confidencePercent / 100,
+    {
+      hairLength,
+      hairTexture,
+    }
+  );
+
+  const group = rankedRecommendations.slice(0, 3);
 
   const initialIndex = Math.max(
     group.findIndex((item) => item.id === id),
     0
   );
   const [selectedIndex, setSelectedIndex] = useState(initialIndex);
-  const [previewOpen, setPreviewOpen] = useState(false);
 
-  const rec = group[selectedIndex] || currentItem;
+  const rec = group[selectedIndex] || group[0];
 
   const values = {
     faceShape: rec.faceShape,
@@ -204,7 +241,7 @@ function DetailContent() {
               Analisis Kesesuaian AI
             </h3>
             <span className="rounded-full bg-[#F3D9D6] px-2.5 py-0.5 text-[11px] font-bold text-[#6B4035]">
-              {rec.matchScore}% Match
+              {rec.calculatedScore}% Match
             </span>
           </div>
           <div className="mt-3 space-y-2 border-t border-[#E9C7C3]/50 pt-2.5 text-[12px]">
