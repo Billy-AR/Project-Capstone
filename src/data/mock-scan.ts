@@ -1,26 +1,41 @@
-export const MOCK_FACE_SHAPES = [
+export const FACE_SHAPES = [
+  "heart",
+  "oblong",
   "oval",
   "round",
   "square",
-  "heart",
-  "diamond",
 ] as const;
 
+export const MOCK_FACE_SHAPES = FACE_SHAPES;
+
 export const FACE_SHAPE_LABELS: Record<string, string> = {
+  heart: "Hati (Heart)",
+  oblong: "Lonjong (Oblong)",
   oval: "Oval",
-  round: "Bulat",
-  square: "Persegi",
-  heart: "Hati",
-  diamond: "Berlian",
+  round: "Bulat (Round)",
+  square: "Persegi (Square)",
 };
 
 export const FACE_SHAPE_DESCRIPTIONS: Record<string, string> = {
-  oval: "Bentuk wajah oval cenderung seimbang dan cocok dengan berbagai gaya rambut.",
-  round: "Bentuk wajah bulat memiliki lebar dan panjang hampir sama dengan pipi yang melengkung.",
-  square: "Bentuk wajah persegi memiliki lebar pipi dan rahang yang sama dengan sudut tegas.",
-  heart: "Bentuk wajah hati memiliki dahi lebar dan rahang yang runcing ke bawah.",
-  diamond: "Bentuk wajah berlian memiliki pipi paling lebar dengan dahi dan rahang sempit.",
+  heart: "Bentuk wajah hati memiliki dahi yang relatif lebar dengan tulang pipi tinggi dan dagu yang runcing ke bawah.",
+  oblong: "Bentuk wajah lonjong cenderung lebih panjang daripada lebarnya dengan garis rahang dan dahi yang lurus.",
+  oval: "Bentuk wajah oval cenderung seimbang dan proporsional, cocok dengan hampir semua gaya rambut.",
+  round: "Bentuk wajah bulat memiliki lebar dan panjang hampir sama dengan pipi penuh dan dagu melengkung lembut.",
+  square: "Bentuk wajah persegi memiliki garis rahang tegas dengan sudut pipi kuat dan dahi yang seimbang.",
 };
+
+export function getFaceShapeLabel(shape: string): string {
+  const key = shape.toLowerCase();
+  return FACE_SHAPE_LABELS[key] || shape;
+}
+
+export function getFaceShapeDescription(shape: string): string {
+  const key = shape.toLowerCase();
+  return (
+    FACE_SHAPE_DESCRIPTIONS[key] ||
+    "Bentuk wajah unik yang cocok dengan berbagai gaya penataan rambut pilihan."
+  );
+}
 
 export const MOCK_SCAN_RESULT: ScanResult = {
   faceShape: "oval",

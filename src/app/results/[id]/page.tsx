@@ -1,9 +1,25 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { TopBar } from "@/components/ui/TopBar";
-import { RECOMMENDATIONS } from "@/data/recommendations";
+import {
+  FaceShapeType,
+  HAIR_LENGTH_LABELS,
+  HAIR_TEXTURE_LABELS,
+  HairLength,
+  HairTexture,
+  RECOMMENDATIONS,
+  getRecommendationById,
+} from "@/data/recommendations";
+import { getFaceShapeLabel } from "@/data/mock-scan";
+import {
+  PredictionResult,
+  StoredPreferences,
+  readPreferences,
+  readPrediction,
+} from "@/lib/photo";
+import { rankRecommendations } from "@/lib/recommendationEngine";
 
 const attributeRows = [
   {
@@ -70,18 +86,71 @@ export default function RecommendationDetailPage() {
 function DetailContent() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const id = String(params.id);
+
+  const [prediction, setPrediction] = useState<PredictionResult | null>(null);
+  const [prefs, setPrefs] = useState<StoredPreferences>({
+    hairLength: "any",
+    hairTexture: "any",
+  });
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  useEffect(() => {
+    setPrediction(readPrediction());
+    const saved = readPreferences();
+    const qLen = searchParams.get("length") as HairLength | "any" | null;
+    const qTex = searchParams.get("texture") as HairTexture | "any" | null;
+    setPrefs({
+      hairLength: qLen || saved.hairLength,
+      hairTexture: qTex || saved.hairTexture,
+    });
+  }, [searchParams]);
+
+  const currentFallback = getRecommendationById(id) || RECOMMENDATIONS[0];
+  const activeFaceShape = (prediction?.face_shape || currentFallback.faceShape) as FaceShapeType;
+  const activeConfidence = prediction
+    ? prediction.confidence <= 1
+      ? prediction.confidence
+      : prediction.confidence / 100
+    : 0.94;
+
+  const group = useMemo(() => {
+    const ranked = rankRecommendations(activeFaceShape, activeConfidence, prefs);
+    const top3 = ranked.slice(0, 3);
+    if (top3.some((item) => item.id === id)) {
+      return top3;
+    }
+    const targetScored = ranked.find((item) => item.id === id);
+    if (targetScored) {
+      return [targetScored, ...top3.slice(0, 2)];
+    }
+    return top3;
+  }, [activeFaceShape, activeConfidence, prefs, id]);
+
   const initialIndex = Math.max(
-    RECOMMENDATIONS.findIndex((item) => item.id === id),
+    group.findIndex((item) => item.id === id),
     0
   );
   const [selectedIndex, setSelectedIndex] = useState(initialIndex);
-  const [previewOpen, setPreviewOpen] = useState(false);
 
-  const rec = RECOMMENDATIONS[selectedIndex];
+  useEffect(() => {
+    const idx = group.findIndex((item) => item.id === id);
+    if (idx >= 0) {
+      setSelectedIndex(idx);
+    }
+  }, [group, id]);
+
+  const rec = group[selectedIndex] || group[0];
+  const displayFaceLabel = getFaceShapeLabel(activeFaceShape);
+  const faceCompatPct = Math.round(
+    (rec.faceShapeCompatibility[activeFaceShape] ??
+      rec.faceShapeCompatibility[rec.faceShape] ??
+      0.92) * 100
+  );
 
   const values = {
-    faceShape: rec.faceShape,
+    faceShape: displayFaceLabel,
     impression: rec.mainImpression,
     suitableFor: rec.suitableFor,
   };
@@ -108,7 +177,7 @@ function DetailContent() {
           >
             <img
               src={rec.detailImage}
-              alt="Detail Gaya Rambut"
+              alt={rec.name}
               className="h-full w-full object-cover transition duration-200 group-hover:scale-[1.03]"
             />
             <span className="absolute right-2 top-2 rounded-full bg-black/45 px-2 py-0.5 text-[10px] text-white opacity-80 transition group-hover:opacity-100">
@@ -118,7 +187,7 @@ function DetailContent() {
 
           {/* 3 Interactive Pagination Dots at Bottom of Photo */}
           <div className="absolute inset-x-0 bottom-3.5 z-10 flex items-center justify-center gap-5">
-            {RECOMMENDATIONS.map((item, index) => (
+            {group.map((item, index) => (
               <button
                 key={item.id}
                 type="button"
@@ -134,7 +203,7 @@ function DetailContent() {
 
         {/* Right Column: Title, Summary, and 3 Attribute Badges */}
         <div className="flex-1 pt-0.5">
-          <h2 className="font-heading text-[clamp(26px,7.4vw,32px)] font-bold leading-tight text-[#6B4035]">
+          <h2 className="font-heading text-[clamp(24px,7vw,30px)] font-bold leading-tight text-[#6B4035]">
             {rec.name}
           </h2>
           <p className="mt-1 font-body text-[11.5px] leading-[1.45] text-[#000000]">
@@ -158,14 +227,14 @@ function DetailContent() {
         </div>
       </div>
 
-      {/* Quick Style Tabs (Layer Cut | Long Wave | Hime Cut) */}
+      {/* Quick Style Tabs */}
       <div className="relative z-10 mt-4 flex items-center justify-between gap-2 px-6">
-        {RECOMMENDATIONS.map((item, index) => (
+        {group.map((item, index) => (
           <button
             key={item.id}
             type="button"
             onClick={() => setSelectedIndex(index)}
-            className={`flex-1 rounded-full py-1.5 text-[11.5px] font-semibold transition ${
+            className={`flex-1 truncate rounded-full px-2 py-1.5 text-[11px] font-semibold transition ${
               selectedIndex === index
                 ? "bg-[#6B4035] text-white"
                 : "bg-[#F3D9D6] text-[#6B4035]"
@@ -188,8 +257,45 @@ function DetailContent() {
         </div>
       </div>
 
-      {/* Card 2: Tips Styling */}
-      <div className="relative z-10 mt-5 px-6">
+      {/* Card 2: Analisis Kesesuaian Multi-Kriteria AI */}
+      <div className="relative z-10 mt-4 px-6">
+        <div className="card-surface p-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-heading text-[17px] font-bold text-[#000000]">
+              Analisis Kesesuaian AI
+            </h3>
+            <span className="rounded-full bg-[#F3D9D6] px-2.5 py-0.5 text-[11px] font-bold text-[#6B4035]">
+              {rec.calculatedScore}% Match
+            </span>
+          </div>
+          <div className="mt-3 space-y-2 border-t border-[#E9C7C3]/50 pt-2.5 text-[12px]">
+            <div className="flex items-center justify-between text-[#35231E]">
+              <span>Kesesuaian Wajah {displayFaceLabel}:</span>
+              <span className="font-bold text-[#6B4035]">{faceCompatPct}%</span>
+            </div>
+            <div className="flex items-center justify-between text-[#35231E]">
+              <span>Target Panjang Rambut:</span>
+              <span className="font-bold text-[#6B4035]">
+                {HAIR_LENGTH_LABELS[rec.hairLength]}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-[#35231E]">
+              <span>Tekstur Rambut:</span>
+              <span className="font-bold text-[#6B4035]">
+                {rec.hairTextures.map((t) => HAIR_TEXTURE_LABELS[t]).join(", ")}
+              </span>
+            </div>
+            {rec.matchReasons.length > 0 && (
+              <div className="pt-1 text-[11.5px] leading-snug text-[#6B4035]">
+                {rec.matchReasons.join(" • ")}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Card 3: Tips Styling */}
+      <div className="relative z-10 mt-4 px-6">
         <div className="card-surface p-4">
           <h3 className="font-heading text-[18px] font-bold text-[#000000]">Tips Styling</h3>
           <ul className="mt-2.5 list-disc space-y-1.5 pl-5 font-body text-[12px] text-[#000000]">
@@ -202,11 +308,11 @@ function DetailContent() {
 
       {/* IMAGE PREVIEW MODAL */}
       {previewOpen && (
-        <div className="absolute inset-0 z-40 flex items-center justify-center bg-[#FAF3EC]/55 px-6 backdrop-blur-[5px]">
-          <div className="relative aspect-[361/433] w-[361px] max-w-full overflow-hidden bg-[#DFDBD8] shadow-2xl">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-[#FAF3EC]/65 px-6 backdrop-blur-[5px]">
+          <div className="relative aspect-[361/433] w-[361px] max-w-full overflow-hidden rounded-[14px] bg-[#DFDBD8] shadow-2xl">
             <img
               src={rec.detailImage}
-              alt="Image Preview"
+              alt={rec.name}
               className="h-full w-full object-cover"
             />
             <button

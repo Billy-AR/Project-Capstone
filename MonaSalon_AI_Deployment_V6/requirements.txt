@@ -1,9 +1,10 @@
---extra-index-url https://download.pytorch.org/whl/cpu
 torch
 torchvision
+timm
 mediapipe
 numpy
 Pillow
+scipy
 fastapi
 uvicorn
 python-multipart

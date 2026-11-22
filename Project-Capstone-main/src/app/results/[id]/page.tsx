@@ -1,19 +1,25 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { TopBar } from "@/components/ui/TopBar";
-import { PredictionResult, readPrediction } from "@/lib/photo";
 import {
+  FaceShapeType,
+  HAIR_LENGTH_LABELS,
+  HAIR_TEXTURE_LABELS,
   HairLength,
   HairTexture,
   RECOMMENDATIONS,
   getRecommendationById,
 } from "@/data/recommendations";
+import { getFaceShapeLabel } from "@/data/mock-scan";
 import {
-  rankRecommendations,
-  ScoredRecommendation,
-} from "@/lib/recommendationEngine";
+  PredictionResult,
+  StoredPreferences,
+  readPreferences,
+  readPrediction,
+} from "@/lib/photo";
+import { rankRecommendations } from "@/lib/recommendationEngine";
 
 const attributeRows = [
   {
@@ -84,38 +90,43 @@ function DetailContent() {
   const id = String(params.id);
 
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
+  const [prefs, setPrefs] = useState<StoredPreferences>({
+    hairLength: "any",
+    hairTexture: "any",
+  });
   const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
-    const data = readPrediction();
-    if (data) {
-      setPrediction(data);
-    }
-  }, []);
+    setPrediction(readPrediction());
+    const saved = readPreferences();
+    const qLen = searchParams.get("length") as HairLength | "any" | null;
+    const qTex = searchParams.get("texture") as HairTexture | "any" | null;
+    setPrefs({
+      hairLength: qLen || saved.hairLength,
+      hairTexture: qTex || saved.hairTexture,
+    });
+  }, [searchParams]);
 
-  const currentItem = getRecommendationById(id) || RECOMMENDATIONS[0];
-
-  const hairLength = (searchParams.get("length") as HairLength | "any") || "any";
-  const hairTexture = (searchParams.get("texture") as HairTexture | "any") || "any";
-
-  const faceShape = prediction?.face_shape || currentItem.faceShape;
-  const confidencePercent = prediction
+  const currentFallback = getRecommendationById(id) || RECOMMENDATIONS[0];
+  const activeFaceShape = (prediction?.face_shape || currentFallback.faceShape) as FaceShapeType;
+  const activeConfidence = prediction
     ? prediction.confidence <= 1
-      ? Math.round(prediction.confidence * 100)
-      : Math.round(prediction.confidence)
-    : 94;
+      ? prediction.confidence
+      : prediction.confidence / 100
+    : 0.94;
 
-  // Hitung skor menggunakan engine yang sama persis dengan halaman results
-  const rankedRecommendations: ScoredRecommendation[] = rankRecommendations(
-    faceShape,
-    confidencePercent / 100,
-    {
-      hairLength,
-      hairTexture,
+  const group = useMemo(() => {
+    const ranked = rankRecommendations(activeFaceShape, activeConfidence, prefs);
+    const top3 = ranked.slice(0, 3);
+    if (top3.some((item) => item.id === id)) {
+      return top3;
     }
-  );
-
-  const group = rankedRecommendations.slice(0, 3);
+    const targetScored = ranked.find((item) => item.id === id);
+    if (targetScored) {
+      return [targetScored, ...top3.slice(0, 2)];
+    }
+    return top3;
+  }, [activeFaceShape, activeConfidence, prefs, id]);
 
   const initialIndex = Math.max(
     group.findIndex((item) => item.id === id),
@@ -123,10 +134,23 @@ function DetailContent() {
   );
   const [selectedIndex, setSelectedIndex] = useState(initialIndex);
 
+  useEffect(() => {
+    const idx = group.findIndex((item) => item.id === id);
+    if (idx >= 0) {
+      setSelectedIndex(idx);
+    }
+  }, [group, id]);
+
   const rec = group[selectedIndex] || group[0];
+  const displayFaceLabel = getFaceShapeLabel(activeFaceShape);
+  const faceCompatPct = Math.round(
+    (rec.faceShapeCompatibility[activeFaceShape] ??
+      rec.faceShapeCompatibility[rec.faceShape] ??
+      0.92) * 100
+  );
 
   const values = {
-    faceShape: rec.faceShape,
+    faceShape: displayFaceLabel,
     impression: rec.mainImpression,
     suitableFor: rec.suitableFor,
   };
@@ -153,7 +177,7 @@ function DetailContent() {
           >
             <img
               src={rec.detailImage}
-              alt="Detail Gaya Rambut"
+              alt={rec.name}
               className="h-full w-full object-cover transition duration-200 group-hover:scale-[1.03]"
             />
             <span className="absolute right-2 top-2 rounded-full bg-black/45 px-2 py-0.5 text-[10px] text-white opacity-80 transition group-hover:opacity-100">
@@ -179,7 +203,7 @@ function DetailContent() {
 
         {/* Right Column: Title, Summary, and 3 Attribute Badges */}
         <div className="flex-1 pt-0.5">
-          <h2 className="font-heading text-[clamp(26px,7.4vw,32px)] font-bold leading-tight text-[#6B4035]">
+          <h2 className="font-heading text-[clamp(24px,7vw,30px)] font-bold leading-tight text-[#6B4035]">
             {rec.name}
           </h2>
           <p className="mt-1 font-body text-[11.5px] leading-[1.45] text-[#000000]">
@@ -210,7 +234,7 @@ function DetailContent() {
             key={item.id}
             type="button"
             onClick={() => setSelectedIndex(index)}
-            className={`flex-1 rounded-full py-1.5 text-[11.5px] font-semibold transition ${
+            className={`flex-1 truncate rounded-full px-2 py-1.5 text-[11px] font-semibold transition ${
               selectedIndex === index
                 ? "bg-[#6B4035] text-white"
                 : "bg-[#F3D9D6] text-[#6B4035]"
@@ -246,21 +270,26 @@ function DetailContent() {
           </div>
           <div className="mt-3 space-y-2 border-t border-[#E9C7C3]/50 pt-2.5 text-[12px]">
             <div className="flex items-center justify-between text-[#35231E]">
-              <span>Kesesuaian Wajah {rec.faceShape}:</span>
-              <span className="font-bold text-[#6B4035]">
-                {Math.round((rec.faceShapeCompatibility[rec.faceShape] || 0.95) * 100)}%
-              </span>
+              <span>Kesesuaian Wajah {displayFaceLabel}:</span>
+              <span className="font-bold text-[#6B4035]">{faceCompatPct}%</span>
             </div>
             <div className="flex items-center justify-between text-[#35231E]">
               <span>Target Panjang Rambut:</span>
-              <span className="font-bold capitalize text-[#6B4035]">{rec.hairLength}</span>
+              <span className="font-bold text-[#6B4035]">
+                {HAIR_LENGTH_LABELS[rec.hairLength]}
+              </span>
             </div>
             <div className="flex items-center justify-between text-[#35231E]">
               <span>Tekstur Rambut:</span>
-              <span className="font-bold capitalize text-[#6B4035]">
-                {rec.hairTextures.join(", ")}
+              <span className="font-bold text-[#6B4035]">
+                {rec.hairTextures.map((t) => HAIR_TEXTURE_LABELS[t]).join(", ")}
               </span>
             </div>
+            {rec.matchReasons.length > 0 && (
+              <div className="pt-1 text-[11.5px] leading-snug text-[#6B4035]">
+                {rec.matchReasons.join(" • ")}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -279,11 +308,11 @@ function DetailContent() {
 
       {/* IMAGE PREVIEW MODAL */}
       {previewOpen && (
-        <div className="absolute inset-0 z-40 flex items-center justify-center bg-[#FAF3EC]/55 px-6 backdrop-blur-[5px]">
-          <div className="relative aspect-[361/433] w-[361px] max-w-full overflow-hidden bg-[#DFDBD8] shadow-2xl">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-[#FAF3EC]/65 px-6 backdrop-blur-[5px]">
+          <div className="relative aspect-[361/433] w-[361px] max-w-full overflow-hidden rounded-[14px] bg-[#DFDBD8] shadow-2xl">
             <img
               src={rec.detailImage}
-              alt="Image Preview"
+              alt={rec.name}
               className="h-full w-full object-cover"
             />
             <button

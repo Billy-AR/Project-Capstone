@@ -4,6 +4,7 @@ const PHOTO_KEY = "mona:photo";
 const INVALID_KEY = "mona:invalid";
 const PREDICTION_KEY = "mona:prediction";
 const ERROR_KEY = "mona:error";
+const PREFS_KEY = "mona:prefs";
 
 export interface PredictionItem {
   label: string;
@@ -17,6 +18,37 @@ export interface PredictionResult {
   predictions: PredictionItem[];
   needs_review?: boolean;
   faces_detected?: number;
+  model_version?: string;
+  calibrated?: boolean;
+  quality_warnings?: string[];
+  geometry_summary?: {
+    height_to_width?: number;
+    jaw_to_cheek?: number;
+    forehead_to_cheek?: number;
+  };
+}
+
+export interface StoredPreferences {
+  hairLength: "any" | "short" | "medium" | "long";
+  hairTexture: "any" | "straight" | "wavy" | "curly";
+}
+
+export function storePreferences(prefs: StoredPreferences) {
+  try {
+    sessionStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readPreferences(): StoredPreferences {
+  try {
+    const raw = sessionStorage.getItem(PREFS_KEY);
+    if (raw) return JSON.parse(raw) as StoredPreferences;
+  } catch {
+    /* ignore */
+  }
+  return { hairLength: "any", hairTexture: "any" };
 }
 
 export function storePhoto(dataUrl: string) {

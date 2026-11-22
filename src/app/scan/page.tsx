@@ -4,7 +4,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TopBar } from "@/components/ui/TopBar";
 import { useStoredPhoto } from "@/lib/useStoredPhoto";
-import { DEFAULT_USER_PHOTO, readInvalidSimulation } from "@/lib/photo";
+import {
+  DEFAULT_USER_PHOTO,
+  readInvalidSimulation,
+  storeError,
+  storePrediction,
+} from "@/lib/photo";
 
 const CIRCUMFERENCE = 867;
 
@@ -14,22 +19,100 @@ export default function ScanPage() {
   const [progress, setProgress] = useState(15);
 
   useEffect(() => {
-    let current = 15;
-    const timer = setInterval(() => {
-      current += 15;
-      if (current >= 100) {
-        setProgress(100);
-        clearInterval(timer);
-        setTimeout(() => {
-          router.push(readInvalidSimulation() ? "/error" : "/results");
-        }, 260);
-      } else {
-        setProgress(current);
-      }
-    }, 260);
+    let isMounted = true;
+    const abortController = new AbortController();
+    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    return () => clearInterval(timer);
-  }, [router]);
+    async function runScan() {
+      // 1. Jika pengguna memilih simulasi invalid secara manual
+      if (readInvalidSimulation()) {
+        for (let p = 15; p <= 100; p += 15) {
+          if (!isMounted) return;
+          setProgress(Math.min(p, 100));
+          await wait(200);
+        }
+        if (isMounted) {
+          storeError("Wajah tidak terdeteksi (Simulasi)");
+          router.push("/error");
+        }
+        return;
+      }
+
+      // 2. Animasikan progress bar secara bertahap sambil menunggu API
+      let currentProgress = 15;
+      const interval = setInterval(() => {
+        if (!isMounted) return;
+        currentProgress = Math.min(currentProgress + 8, 85);
+        setProgress(currentProgress);
+      }, 180);
+
+      try {
+        // Ambil data foto (bisa berupa dataUrl atau path aset publik)
+        const photoRes = await fetch(photo);
+        const blob = await photoRes.blob();
+
+        const formData = new FormData();
+        formData.append("file", blob, "user-photo.jpg");
+
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const startTime = Date.now();
+
+        const response = await fetch(`${apiUrl}/predict`, {
+          method: "POST",
+          body: formData,
+          signal: abortController.signal,
+        });
+
+        // Berikan waktu minimal ~800ms agar animasi scanning tampak natural
+        const elapsed = Date.now() - startTime;
+        if (elapsed < 800) {
+          await wait(800 - elapsed);
+        }
+
+        clearInterval(interval);
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => null);
+          const errMsg = errData?.detail || "Wajah tidak dapat diproses";
+          storeError(errMsg);
+
+          if (!isMounted) return;
+          setProgress(100);
+          await wait(260);
+          router.push("/error");
+          return;
+        }
+
+        const result = await response.json();
+        storePrediction(result);
+
+        if (!isMounted) return;
+        setProgress(100);
+        await wait(300);
+        router.push("/results");
+      } catch (err: unknown) {
+        clearInterval(interval);
+        if (!isMounted) return;
+
+        if (err instanceof DOMException && err.name === "AbortError") {
+          return;
+        }
+
+        console.error("Scan error:", err);
+        storeError("Tidak dapat terhubung ke server AI");
+        setProgress(100);
+        await wait(260);
+        router.push("/error");
+      }
+    }
+
+    runScan();
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
+  }, [photo, router]);
 
   const ringOffset = Math.round(CIRCUMFERENCE - (CIRCUMFERENCE * progress) / 100);
 

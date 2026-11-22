@@ -1,8 +1,11 @@
 {
     "project": "Mona Salon",
-    "model_name": "EfficientNet-B4 V6",
-    "model_file": "mona_efficientnet_b4_v6_best.pth",
+    "model_name": "ConvNeXt-Small + GeoLandmarks V7",
+    "backbone_name": "convnext_small.fb_in22k_ft_in1k_384",
+    "model_file": "mona_convnext_small_v7_best.pth",
+    "legacy_model_file": "mona_efficientnet_b4_v6_best.pth",
     "detector_file": "blaze_face_short_range.tflite",
+    "landmarker_file": "face_landmarker.task",
     "classes": [
         "Heart",
         "Oblong",
@@ -11,8 +14,8 @@
         "Square"
     ],
     "input_size": [
-        380,
-        380
+        288,
+        288
     ],
     "normalization": {
         "mean": [
@@ -27,16 +30,39 @@
         ]
     },
     "face_crop": {
-        "margin_x": 0.3,
-        "margin_y": 0.35,
-        "selection": "largest_bounding_box",
-        "resize": "bilinear",
+        "scale_factor": 1.65,
+        "selection": "largest_face_aligned_square_pad",
+        "eye_roll_alignment": true,
+        "aspect_ratio_preserving_pad": true,
+        "resize": "bicubic",
         "exif_transpose": true
     },
-    "test_accuracy": 0.705,
-    "test_macro_f1": 0.704575,
+    "tta": {
+        "enabled": true,
+        "views": [
+            "original",
+            "horizontal_flip",
+            "center_zoom_92"
+        ],
+        "weights": [
+            0.45,
+            0.35,
+            0.2
+        ]
+    },
+    "temperature": 1.0,
+    "test_accuracy": 0.908,
+    "test_macro_precision": 0.9079,
+    "test_macro_recall": 0.908,
+    "test_macro_f1": 0.9078,
+    "test_weighted_f1": 0.9078,
+    "test_ece": 0.0479,
+    "v6_baseline_test_accuracy": 0.78,
+    "v6_baseline_test_macro_f1": 0.7788,
     "confidence_threshold": {
-        "value": 0.6,
-        "status": "experimental_not_calibrated"
+        "value": 0.75,
+        "calibrated_high_confidence_value": 0.85,
+        "val_accuracy_above_high_threshold": 0.9569,
+        "status": "calibrated_on_val_temperature_scaling"
     }
 }

@@ -161,7 +161,7 @@ export const RECOMMENDATIONS: Recommendation[] = [
     tagline:
       "Potongan layer panjang dengan poni tirai yang membingkai samping wajah dan memberi siluet lebih tirus.",
     faceShape: "Round",
-    hairLength: "medium",
+    hairLength: "long",
     hairTextures: ["straight", "wavy"],
     impressions: ["Tirus", "Anggun", "Segar"],
     faceShapeCompatibility: {
@@ -224,10 +224,10 @@ export const RECOMMENDATIONS: Recommendation[] = [
     id: "round-face-framing",
     name: "Framing Cut",
     tagline:
-      "Potongan rambut dengan layer bertahap di bawah rahang untuk menciptakan ilusi sudut wajah yang lebih tegas.",
+      "Potongan rambut panjang dengan layer bertahap di bawah rahang untuk menciptakan ilusi sudut wajah yang lebih tegas.",
     faceShape: "Round",
-    hairLength: "short",
-    hairTextures: ["straight"],
+    hairLength: "long",
+    hairTextures: ["straight", "wavy"],
     impressions: ["Modern", "Ramping", "Stylish"],
     faceShapeCompatibility: {
       Round: 0.93,
@@ -237,7 +237,7 @@ export const RECOMMENDATIONS: Recommendation[] = [
       Oblong: 0.70,
     },
     mainImpression: "Modern, Ramping, Stylish",
-    suitableFor: "Rambut Lurus",
+    suitableFor: "Rambut Lurus & Bergelombang",
     characteristics: [
       "Layer presisi membingkai area bawah rahang",
       "Potongan lurus rapi di bagian belakang",
@@ -257,10 +257,10 @@ export const RECOMMENDATIONS: Recommendation[] = [
     id: "square-soft-waves",
     name: "Soft Layer Wave",
     tagline:
-      "Gelombang lembut bertingkat yang melembutkan sudut rahang yang tegas dan memberikan aura feminin yang anggun.",
+      "Potongan sebahu berlayer lembut yang melembutkan sudut rahang yang tegas dan memberikan aura feminin yang anggun.",
     faceShape: "Square",
-    hairLength: "long",
-    hairTextures: ["wavy", "curly"],
+    hairLength: "medium",
+    hairTextures: ["straight", "wavy"],
     impressions: ["Lembut", "Anggun", "Romantis"],
     faceShapeCompatibility: {
       Square: 0.98,
@@ -270,7 +270,7 @@ export const RECOMMENDATIONS: Recommendation[] = [
       Oblong: 0.82,
     },
     mainImpression: "Lembut, Anggun, Romantis",
-    suitableFor: "Rambut Bergelombang",
+    suitableFor: "Rambut Lurus & Bergelombang",
     characteristics: [
       "Ombak rambut lembut mengelilingi garis rahang",
       "Layer bertingkat menyamarkan sudut tegas wajah persegi",
@@ -288,9 +288,9 @@ export const RECOMMENDATIONS: Recommendation[] = [
     id: "square-feathered-cut",
     name: "Feathered Layer",
     tagline:
-      "Layer bertekstur bulu halus yang memberikan dimensi dan mengalihkan fokus dari ketegasan rahang persegi.",
+      "Layer panjang bertekstur bulu halus yang memberikan dimensi dan mengalihkan fokus dari ketegasan rahang persegi.",
     faceShape: "Square",
-    hairLength: "medium",
+    hairLength: "long",
     hairTextures: ["straight", "wavy"],
     impressions: ["Dinamis", "Ringan", "Modern"],
     faceShapeCompatibility: {
@@ -352,9 +352,9 @@ export const RECOMMENDATIONS: Recommendation[] = [
     id: "heart-volume-waves",
     name: "Lower Wave Cut",
     tagline:
-      "Gelombang bervolume yang terkonsentrasi di area bahu untuk menyeimbangkan dagu lancip dan dahi yang lebar.",
+      "Potongan bob bergelombang bervolume di area rahang hingga bahu untuk menyeimbangkan dagu lancip dan dahi yang lebar.",
     faceShape: "Heart",
-    hairLength: "long",
+    hairLength: "short",
     hairTextures: ["wavy", "curly"],
     impressions: ["Elegan", "Seimbang", "Menawan"],
     faceShapeCompatibility: {
@@ -509,10 +509,10 @@ export const RECOMMENDATIONS: Recommendation[] = [
     id: "oblong-side-fringe",
     name: "Shaggy Framing",
     tagline:
-      "Potongan shaggy modern dengan trap samping di level pipi untuk menambah volume di bagian tengah wajah.",
+      "Potongan shaggy panjang modern dengan trap samping di level pipi untuk menambah volume di bagian tengah wajah.",
     faceShape: "Oblong",
-    hairLength: "short",
-    hairTextures: ["straight"],
+    hairLength: "long",
+    hairTextures: ["straight", "wavy"],
     impressions: ["Unik", "Berkarakter", "Modern"],
     faceShapeCompatibility: {
       Oblong: 0.91,
@@ -522,7 +522,7 @@ export const RECOMMENDATIONS: Recommendation[] = [
       Heart: 0.80,
     },
     mainImpression: "Unik, Berkarakter, Modern",
-    suitableFor: "Rambut Lurus",
+    suitableFor: "Rambut Lurus & Bergelombang",
     characteristics: [
       "Trap rambut tegas di sekitar pipi dan telinga",
       "Ujung rambut bertekstur menyamping",
@@ -537,6 +537,18 @@ export const RECOMMENDATIONS: Recommendation[] = [
     detailImage: "/assets/style-oblong-side-fringe.jpg",
   },
 ];
+
+export const HAIR_LENGTH_LABELS: Record<HairLength, string> = {
+  short: "Pendek",
+  medium: "Sebahu (Medium)",
+  long: "Panjang",
+};
+
+export const HAIR_TEXTURE_LABELS: Record<HairTexture, string> = {
+  straight: "Lurus",
+  wavy: "Bergelombang",
+  curly: "Keriting",
+};
 
 export function getRecommendationsForFaceShape(faceShape: string): Recommendation[] {
   const normalized = (faceShape || "Oval").toLowerCase();

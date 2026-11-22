@@ -1,14 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TopBar } from "@/components/ui/TopBar";
 import { CameraModal } from "@/components/ui/CameraModal";
-import { storeInvalidSimulation, storePhoto } from "@/lib/photo";
+import { readError, storeInvalidSimulation, storePhoto } from "@/lib/photo";
 
 export default function ErrorPage() {
   const router = useRouter();
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const err = readError();
+    if (err) {
+      setErrorMessage(err);
+    }
+  }, []);
+
+  const handleBackToUpload = () => {
+    storeInvalidSimulation(false);
+    router.push("/upload");
+  };
 
   return (
     <section className="screen-fade relative min-h-dvh w-full pb-[calc(2rem+env(safe-area-inset-bottom))]">
@@ -18,7 +31,7 @@ export default function ErrorPage() {
         className="pointer-events-none absolute right-0 top-0 z-0 h-auto w-[112px] max-w-[30vw]"
       />
 
-      <TopBar onBack={() => router.push("/upload")} label="Kembali" />
+      <TopBar onBack={handleBackToUpload} label="Kembali ke Upload" />
 
       {/* Large Pink Circle + Face Scan Icon + Red Exclamation Badge */}
       <div className="relative z-10 mt-12 flex justify-center">
@@ -57,32 +70,35 @@ export default function ErrorPage() {
 
       {/* Error Message Copy */}
       <div className="relative z-10 mt-9 px-8 text-center">
-        <h2 className="font-heading text-[24px] font-bold text-[#000000]">Wajah tidak terdeteksi</h2>
-        <p className="mt-2 font-body text-[13.5px] leading-[1.5] text-[#000000]">
-          Pastikan wajah terlihat jelas, menghadap kamera, pencahayaan cukup, dan tidak tertutup oleh objek lain.
+        <h2 className="font-heading text-[24px] font-bold text-[#000000]">
+          Wajah Tidak Terdeteksi Jelas
+        </h2>
+        <p className="mt-2 font-body text-[13.5px] leading-[1.55] text-[#000000]">
+          {errorMessage ||
+            "Wajah tidak terdeteksi jelas, silakan unggah ulang foto Anda. Pastikan wajah terlihat jelas, menghadap kamera, pencahayaan cukup, dan tidak tertutup oleh objek lain."}
         </p>
       </div>
 
       {/* Action Buttons */}
-      <div className="relative z-10 mt-8 space-y-6 px-4">
+      <div className="relative z-10 mt-8 space-y-4 px-4">
         <button
           type="button"
           onClick={() => setCameraOpen(true)}
-          className="btn-primary flex h-[62px] w-full items-center justify-center gap-4 rounded-full px-6"
+          className="btn-primary flex h-[58px] w-full items-center justify-center gap-3 rounded-full px-6 shadow-md"
         >
-          <svg className="h-9 w-10 text-[#F6E6E3]" viewBox="0 0 24 24" fill="currentColor">
+          <svg className="h-7 w-7 text-[#F6E6E3]" viewBox="0 0 24 24" fill="currentColor">
             <path d="M9 3L7.17 5H4C2.9 5 2 5.9 2 7V19C2 20.1 2.9 21 4 21H20C21.1 21 22 20.1 22 19V7C22 5.9 21.1 5 20 5H16.83L15 3H9ZM12 18C9.24 18 7 15.76 7 13C7 10.24 9.24 8 12 8C14.76 8 17 10.24 17 13C17 15.76 14.76 18 12 18ZM12 10C10.34 10 9 11.34 9 13C9 14.66 10.34 16 12 16C13.66 16 15 14.66 15 13C15 11.34 13.66 10 12 10Z" />
           </svg>
-          <span className="font-body text-[17px] font-bold text-white">Ambil Ulang Foto</span>
+          <span className="font-body text-[16px] font-bold text-white">Ambil Ulang Foto</span>
         </button>
 
         <button
           type="button"
-          onClick={() => router.push("/upload")}
-          className="btn-secondary flex h-[62px] w-full items-center justify-center gap-4 rounded-full px-6"
+          onClick={handleBackToUpload}
+          className="btn-secondary flex h-[58px] w-full items-center justify-center gap-3 rounded-full px-6 shadow-sm"
         >
           <svg
-            className="h-10 w-10 text-[#6B4035]"
+            className="h-8 w-8 text-[#6B4035]"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -94,7 +110,7 @@ export default function ErrorPage() {
             <circle cx="8.5" cy="8.5" r="1.6" />
             <polyline points="21 15 16 10 5 21" />
           </svg>
-          <span className="font-body text-[17px] font-bold text-[#6B4035]">Upload Foto Lain</span>
+          <span className="font-body text-[16px] font-bold text-[#6B4035]">Upload Foto Lain</span>
         </button>
       </div>
 

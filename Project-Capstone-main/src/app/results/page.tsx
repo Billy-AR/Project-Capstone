@@ -4,7 +4,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TopBar } from "@/components/ui/TopBar";
 import { useStoredPhoto } from "@/lib/useStoredPhoto";
-import { DEFAULT_USER_PHOTO, PredictionResult, readPrediction } from "@/lib/photo";
+import {
+  DEFAULT_USER_PHOTO,
+  PredictionResult,
+  readPreferences,
+  readPrediction,
+  storePreferences,
+} from "@/lib/photo";
 import { getFaceShapeDescription, getFaceShapeLabel } from "@/data/mock-scan";
 import { HairLength, HairTexture } from "@/data/recommendations";
 import {
@@ -68,7 +74,29 @@ export default function ResultsPage() {
     if (data) {
       setPrediction(data);
     }
+    const savedPrefs = readPreferences();
+    setHairLength(savedPrefs.hairLength);
+    setHairTexture(savedPrefs.hairTexture);
   }, []);
+
+  const updateLength = (next: HairLength | "any") => {
+    setHairLength(next);
+    setSelectedIndex(0);
+    storePreferences({ hairLength: next, hairTexture });
+  };
+
+  const updateTexture = (next: HairTexture | "any") => {
+    setHairTexture(next);
+    setSelectedIndex(0);
+    storePreferences({ hairLength, hairTexture: next });
+  };
+
+  const resetFilters = () => {
+    setHairLength("any");
+    setHairTexture("any");
+    setSelectedIndex(0);
+    storePreferences({ hairLength: "any", hairTexture: "any" });
+  };
 
   const faceShape = prediction?.face_shape || "Oval";
   const confidencePercent = prediction
@@ -130,7 +158,13 @@ export default function ResultsPage() {
               </span>
               {prediction?.predictions && prediction.predictions.length > 1 && (
                 <span className="mt-0.5 block text-[11px] text-[#6B4035]">
-                  Skor: {confidencePercent}%
+                  Alternatif: {getFaceShapeLabel(prediction.predictions[1].label)} (
+                  {Math.round(
+                    (prediction.predictions[1].score <= 1
+                      ? prediction.predictions[1].score * 100
+                      : prediction.predictions[1].score)
+                  )}
+                  %)
                 </span>
               )}
             </div>
@@ -139,6 +173,15 @@ export default function ResultsPage() {
           <p className="mt-2.5 font-body text-[12.5px] leading-[1.45] text-[#000000]">
             {shapeDesc}
           </p>
+
+          {(prediction?.needs_review ||
+            (prediction?.quality_warnings && prediction.quality_warnings.length > 0)) && (
+            <div className="mt-2 rounded-[8px] border border-[#E5B887] bg-[#FFF5E8] px-2.5 py-1.5 text-[11px] leading-snug text-[#7A4B16]">
+              {prediction.quality_warnings && prediction.quality_warnings.length > 0
+                ? prediction.quality_warnings[0]
+                : "Keyakinan prediksi sedang. Foto menghadap lurus dengan pencahayaan merata dapat meningkatkan akurasi."}
+            </div>
+          )}
         </div>
       </div>
 
@@ -162,11 +205,7 @@ export default function ResultsPage() {
             {(hairLength !== "any" || hairTexture !== "any") && (
               <button
                 type="button"
-                onClick={() => {
-                  setHairLength("any");
-                  setHairTexture("any");
-                  setSelectedIndex(0);
-                }}
+                onClick={resetFilters}
                 className="text-[11px] font-semibold text-[#E04C5B] underline"
               >
                 Reset Filter
@@ -186,10 +225,7 @@ export default function ResultsPage() {
               <button
                 key={opt.id}
                 type="button"
-                onClick={() => {
-                  setHairLength(opt.id as HairLength | "any");
-                  setSelectedIndex(0);
-                }}
+                onClick={() => updateLength(opt.id as HairLength | "any")}
                 className={`rounded-full px-2.5 py-0.5 font-medium transition ${
                   hairLength === opt.id
                     ? "bg-[#6B4035] text-white shadow-xs"
@@ -213,10 +249,7 @@ export default function ResultsPage() {
               <button
                 key={opt.id}
                 type="button"
-                onClick={() => {
-                  setHairTexture(opt.id as HairTexture | "any");
-                  setSelectedIndex(0);
-                }}
+                onClick={() => updateTexture(opt.id as HairTexture | "any")}
                 className={`rounded-full px-2.5 py-0.5 font-medium transition ${
                   hairTexture === opt.id
                     ? "bg-[#6B4035] text-white shadow-xs"
@@ -235,6 +268,7 @@ export default function ResultsPage() {
             <button
               key={rec.id}
               type="button"
+              onMouseEnter={() => setSelectedIndex(index)}
               onClick={() => {
                 setSelectedIndex(index);
                 router.push(`/results/${rec.id}`);
