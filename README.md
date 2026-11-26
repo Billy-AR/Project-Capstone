@@ -1,4 +1,4 @@
-Ini versi **full text `README.md`** yang sudah dibersihkan semua rumus LaTeX-nya agar aman 100% di GitHub (tinggal copy-paste semua):
+
 
 ````markdown
 # Mona Salon — AI Face Shape Analysis & Hairstyle Recommendation System
