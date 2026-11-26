@@ -1,3 +1,6 @@
+Ini versi **full text `README.md`** yang sudah dibersihkan semua rumus LaTeX-nya agar aman 100% di GitHub (tinggal copy-paste semua):
+
+````markdown
 # Mona Salon — AI Face Shape Analysis & Hairstyle Recommendation System
 
 Sistem konsultasi gaya rambut berbasis **Artificial Intelligence (Computer Vision + Multi-Criteria Decision Support)** untuk **Mona Salon**. Pengguna mengunggah atau mengambil foto wajah, sistem mendeteksi bentuk wajah secara otomatis menggunakan model **Hybrid V7 (`ConvNeXt-Small + MediaPipe 478-Landmark`)**, lalu memberikan **Top-3 rekomendasi gaya rambut terbaik** beserta skor kecocokan, foto referensi unik, karakteristik gaya, dan tips styling.
@@ -91,12 +94,16 @@ Laporan lengkap tersimpan di `MonaSalon_AI_Deployment_V6/evaluation_report_v7.js
 ### 4.1 Ekstraksi Fitur Hybrid (Visual + 24 Fitur Geometris)
 1. **Cabang Visual (`ConvNeXt-Small`)**: mengekstrak representasi tekstur, kontur garis rambut, pipi, dan bayangan rahang dari foto wajah `288×288` yang sudah diluruskan sudut matanya (*eye-roll alignment*) dan dipotong persegi dengan *edge padding* (`square_padded_crop`) agar proporsi lebar-tinggi wajah tidak berubah.
 2. **Cabang Geometris (`GeoMLP` — 24 fitur dari MediaPipe 478-landmark)**: menghitung 24 rasio antropometrik yang bebas skala (*scale-invariant*), antara lain:
-   - Rasio tinggi terhadap lebar tulang pipi: $\text{height\_to\_cheek} = \frac{d(\text{dahi}, \text{dagu})}{w_{\text{pipi}}}$ *(membedakan Oblong vs Round)*
-   - Rasio lebar dahi terhadap tulang pipi: $\text{forehead\_to\_cheek} = \frac{w_{\text{dahi}}}{w_{\text{pipi}}}$ *(membedakan Heart)*
-   - Rasio lebar rahang terhadap tulang pipi: $\text{jaw\_to\_cheek} = \frac{w_{\text{rahang}}}{w_{\text{pipi}}}$ *(membedakan Square vs Oval/Heart)*
+   - Rasio tinggi terhadap lebar tulang pipi: `height_to_cheek` $= \frac{d(\text{dahi}, \text{dagu})}{w_{\text{pipi}}}$ *(membedakan Oblong vs Round)*
+   - Rasio lebar dahi terhadap tulang pipi: `forehead_to_cheek` $= \frac{w_{\text{dahi}}}{w_{\text{pipi}}}$ *(membedakan Heart)*
+   - Rasio lebar rahang terhadap tulang pipi: `jaw_to_cheek` $= \frac{w_{\text{rahang}}}{w_{\text{pipi}}}$ *(membedakan Square vs Oval/Heart)*
    - Sudut rahang kiri/kanan (*gonial angle*), sudut lancip dagu, rasio sepertiga wajah, kemiringan tirus pipi-rahang, serta rasio simetri.
    - Setiap fitur dinormalisasi dengan Z-score statistik data latih (dibatasi `[-5, 5]`):
-     $$\tilde{g}_i = \operatorname{clip}\!\left(\frac{g_i - \mu_i}{\sigma_i},\; -5,\; 5\right)$$
+
+     $$
+     \tilde{g}_i = \mathrm{clip}\left(\frac{g_i - \mu_i}{\sigma_i}, -5, 5\right)
+     $$
+
 3. Kedua vektor fitur digabungkan (*concatenation*) di lapisan klasifikasi untuk menghasilkan 5 skor mentah (*logits*) $\mathbf{z} = (z_1, z_2, z_3, z_4, z_5)$.
 
 ### 4.2 3-View Test-Time Augmentation (TTA)
@@ -106,11 +113,18 @@ Agar prediksi stabil dan tidak sensitif terhadap variasi posisi kecil, setiap fo
 3. Foto *center zoom* 92% ($\mathbf{z}_{\text{zoom}}$) — bobot **0.20**
 
 Logit gabungan:
-$$\mathbf{z}_{\text{TTA}} = 0.45\,\mathbf{z}_{\text{orig}} + 0.35\,\mathbf{z}_{\text{flip}} + 0.20\,\mathbf{z}_{\text{zoom}}$$
+
+$$
+\mathbf{z}_{\text{TTA}} = 0.45 \mathbf{z}_{\text{orig}} + 0.35 \mathbf{z}_{\text{flip}} + 0.20 \mathbf{z}_{\text{zoom}}
+$$
 
 ### 4.3 Softmax + Temperature Scaling → Angka "% Cocok" & "Alternatif %"
 Logit gabungan diubah menjadi probabilitas (jumlah seluruh 5 kelas selalu tepat **100%**) dengan rumus **Temperature-Scaled Softmax**:
-$$P(y = k \mid x) = \frac{\exp(z_k / T)}{\sum_{j=1}^{5} \exp(z_j / T)}, \quad k \in \{\text{Heart, Oblong, Oval, Round, Square}\}$$
+
+$$
+P(y = k \mid x) = \frac{\exp(z_k / T)}{\sum_{j=1}^{5} \exp(z_j / T)}, \quad k \in \{\text{Heart, Oblong, Oval, Round, Square}\}
+$$
+
 dengan $T = 1.0$ (hasil kalibrasi optimal pada validation set untuk meminimalkan *Negative Log-Likelihood* / ECE).
 
 - **Bentuk Wajah Utama (`% Cocok`)** = kelas dengan probabilitas **peringkat #1** tertinggi.
@@ -119,10 +133,10 @@ dengan $T = 1.0$ (hasil kalibrasi optimal pada validation set untuk meminimalkan
 
 ### 4.4 Kapan Kotak Peringatan Kuning (`needs_review`) Muncul?
 Flag `needs_review = true` aktif otomatis apabila **salah satu** kondisi terpenuhi:
-1. Probabilitas utama di bawah ambang kalibrasi: $\text{confidence} < 0.75$ (75%).
-2. **Pose menyamping**: asimetri jarak hidung ke pipi kiri/kanan (`yaw_asymmetry`) $> 0.32$.
-3. **Ukuran wajah terlalu kecil**: dimensi wajah pada foto $< 70\text{ px}$.
-4. **Foto buram / kurang cahaya**: variansi Laplacian ketajaman $< 30.0$.
+1. Probabilitas utama di bawah ambang kalibrasi: `confidence < 0.75` (75%).
+2. **Pose menyamping**: asimetri jarak hidung ke pipi kiri/kanan (`yaw_asymmetry`) `> 0.32`.
+3. **Ukuran wajah terlalu kecil**: dimensi wajah pada foto `< 70 px`.
+4. **Foto buram / kurang cahaya**: variansi Laplacian ketajaman `< 30.0`.
 
 ---
 
@@ -131,16 +145,22 @@ Flag `needs_review = true` aktif otomatis apabila **salah satu** kondisi terpenu
 Setelah bentuk wajah dan *confidence* dari model AI diperoleh, frontend menjalankan **Multi-Criteria Recommendation Engine** (`src/lib/recommendationEngine.ts`) untuk menilai seluruh **15 gaya rambut** menggunakan metode **Weighted Sum (Penjumlahan Terbobot)** dari **4 kriteria**:
 
 ### 5.1 Rumus Utama
-$$S_{\text{total}} = (0.50 \times S_{\text{wajah}}) + (0.25 \times S_{\text{tekstur}}) + (0.15 \times S_{\text{panjang}}) + (0.10 \times S_{\text{kesan}})$$
+
+$$
+S_{\text{total}} = (0.50 \times S_{\text{wajah}}) + (0.25 \times S_{\text{tekstur}}) + (0.15 \times S_{\text{panjang}}) + (0.10 \times S_{\text{kesan}})
+$$
 
 Skor akhir dikonversi ke persentase dan dibatasi di rentang **70% – 98%**:
-$$\text{Match (\%)} = \min\!\Big(98,\; \max\!\big(70,\; \operatorname{round}(S_{\text{total}} \times 100)\big)\Big)$$
+
+$$
+\text{Match (\%)} = \min\Big(98, \max\big(70, \mathrm{round}(S_{\text{total}} \times 100)\big)\Big)
+$$
 
 ### 5.2 Rincian Bobot & Nilai Tiap Kriteria (Skala `0.0` – `1.0`)
 
 | Kriteria | Bobot | Rumus / Aturan Penilaian |
 | :--- | :-: | :--- |
-| **1. Kesesuaian Bentuk Wajah** ($S_{\text{wajah}}$) | **50%** | $S_{\text{wajah}} = \min\!\big(1.0,\; \text{compat}_{\text{wajah}} \times (0.85 + 0.15 \times \text{confidence})\big)$ <br>dengan $\text{compat}_{\text{wajah}}$ diambil dari matriks kecocokan tiap gaya rambut terhadap 5 bentuk wajah (misal `0.98`, `0.95`, `0.85`). |
+| **1. Kesesuaian Bentuk Wajah** ($S_{\text{wajah}}$) | **50%** | $S_{\text{wajah}} = \min\big(1.0, \text{compat}_{\text{wajah}} \times (0.85 + 0.15 \times \text{confidence})\big)$ <br>dengan $\text{compat}_{\text{wajah}}$ diambil dari matriks kecocokan tiap gaya rambut terhadap 5 bentuk wajah (misal `0.98`, `0.95`, `0.85`). |
 | **2. Tekstur Rambut** ($S_{\text{tekstur}}$) | **25%** | • Filter **`Semua`**: `0.85` *(nilai netral)*<br>• Filter **cocok** (`Lurus` / `Bergelombang` / `Keriting`): **`1.00`**<br>• Filter **tidak cocok**: `0.45` |
 | **3. Panjang Rambut** ($S_{\text{panjang}}$) | **15%** | • Filter **`Semua`**: `0.85` *(nilai netral)*<br>• Filter **cocok** (`Pendek` / `Sebahu` / `Panjang`): **`1.00`**<br>• Filter **tidak cocok**: `0.40` |
 | **4. Kesan / Vibe Gaya** ($S_{\text{kesan}}$) | **10%** | • Default (`Semua`): `0.90`<br>• Cocok: `1.00` • Tidak cocok: `0.60` |
@@ -161,15 +181,34 @@ $$\text{Match (\%)} = \min\!\Big(98,\; \max\!\big(70,\; \operatorname{round}(S_{
 Misal hasil AI mendeteksi wajah **Lonjong (`Oblong`)** dengan `confidence = 0.82` (82%), dan gaya rambut yang dinilai adalah **Fringe Layer Cut** (`compat_Oblong = 0.95`, panjang `Sebahu`, tekstur `Lurus & Bergelombang`):
 
 - **Langkah 1 — Hitung $S_{\text{wajah}}$:**
-  $$S_{\text{wajah}} = 0.95 \times (0.85 + 0.15 \times 0.82) = 0.95 \times 0.973 = 0.9244$$
+
+  $$
+  S_{\text{wajah}} = 0.95 \times (0.85 + 0.15 \times 0.82) = 0.95 \times 0.973 = 0.9244
+  $$
+
 - **Kasus A — Filter `Panjang: Semua` (`0.85`) & `Tekstur: Semua` (`0.85`):**
-  $$S_{\text{total}} = 0.50(0.9244) + 0.25(0.85) + 0.15(0.85) + 0.10(0.90) = 0.8922 \rightarrow \mathbf{89\%\text{–}90\%\text{ Match}}$$
+
+  $$
+  S_{\text{total}} = 0.50(0.9244) + 0.25(0.85) + 0.15(0.85) + 0.10(0.90) = 0.8922 \rightarrow \mathbf{89\%\text{–}90\%\text{ Match}}
+  $$
+
 - **Kasus B — Filter `Panjang: Sebahu` (`1.00`) & `Tekstur: Semua` (`0.85`):**
-  $$S_{\text{total}} = 0.50(0.9244) + 0.25(0.85) + 0.15(1.00) + 0.10(0.90) = 0.9147 \rightarrow \mathbf{91\%\text{–}92\%\text{ Match}}$$
+
+  $$
+  S_{\text{total}} = 0.50(0.9244) + 0.25(0.85) + 0.15(1.00) + 0.10(0.90) = 0.9147 \rightarrow \mathbf{91\%\text{–}92\%\text{ Match}}
+  $$
+
 - **Kasus C — Filter `Panjang: Sebahu` (`1.00`) & `Tekstur: Lurus` (`1.00`):**
-  $$S_{\text{total}} = 0.50(0.9244) + 0.25(1.00) + 0.15(1.00) + 0.10(0.90) = 0.9522 \rightarrow \mathbf{95\%\text{ Match}}$$
+
+  $$
+  S_{\text{total}} = 0.50(0.9244) + 0.25(1.00) + 0.15(1.00) + 0.10(0.90) = 0.9522 \rightarrow \mathbf{95\%\text{ Match}}
+  $$
+
 - **Kasus D — Filter `Panjang: Pendek` (`0.40`) & `Tekstur: Keriting` (`0.45`):**
-  $$S_{\text{total}} = 0.50(0.9244) + 0.25(0.45) + 0.15(0.40) + 0.10(0.90) = 0.7247 \rightarrow \mathbf{72\%\text{ Match}}$$
+
+  $$
+  S_{\text{total}} = 0.50(0.9244) + 0.25(0.45) + 0.15(0.40) + 0.10(0.90) = 0.7247 \rightarrow \mathbf{72\%\text{ Match}}
+  $$
 
 ---
 
@@ -204,3 +243,4 @@ Buka **`http://localhost:3000`** di browser.
 - `MonaSalon_AI_Deployment_V6/` — Backend FastAPI & Model AI V7 (`mona_api.py`, `mona_inference.py`, `face_geometry.py`, `train_v7.py`, `mona_ai_config.json`, `evaluation_report_v7.json`, `mona_convnext_small_v7_best.pth`, `face_landmarker.task`, `blaze_face_short_range.tflite`)
 - `Project-Capstone-main/` — Aplikasi Frontend Next.js (`src/app/`, `src/data/recommendations.ts`, `src/lib/recommendationEngine.ts`, `public/assets/style-*.jpg`)
 - `src/` & `public/assets/` — Tersinkronisasi dengan `Project-Capstone-main/`
+````
