@@ -1,6 +1,3 @@
-
-
-````markdown
 # Mona Salon — AI Face Shape Analysis & Hairstyle Recommendation System
 
 Sistem konsultasi gaya rambut berbasis **Artificial Intelligence (Computer Vision + Multi-Criteria Decision Support)** untuk **Mona Salon**. Pengguna mengunggah atau mengambil foto wajah, sistem mendeteksi bentuk wajah secara otomatis menggunakan model **Hybrid V7 (`ConvNeXt-Small + MediaPipe 478-Landmark`)**, lalu memberikan **Top-3 rekomendasi gaya rambut terbaik** beserta skor kecocokan, foto referensi unik, karakteristik gaya, dan tips styling.
@@ -243,4 +240,3 @@ Buka **`http://localhost:3000`** di browser.
 - `MonaSalon_AI_Deployment_V6/` — Backend FastAPI & Model AI V7 (`mona_api.py`, `mona_inference.py`, `face_geometry.py`, `train_v7.py`, `mona_ai_config.json`, `evaluation_report_v7.json`, `mona_convnext_small_v7_best.pth`, `face_landmarker.task`, `blaze_face_short_range.tflite`)
 - `Project-Capstone-main/` — Aplikasi Frontend Next.js (`src/app/`, `src/data/recommendations.ts`, `src/lib/recommendationEngine.ts`, `public/assets/style-*.jpg`)
 - `src/` & `public/assets/` — Tersinkronisasi dengan `Project-Capstone-main/`
-````

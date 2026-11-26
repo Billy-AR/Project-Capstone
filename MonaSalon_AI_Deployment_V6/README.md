@@ -61,14 +61,23 @@ Dari 478 landmark wajah, diekstrak 24 fitur bebas skala:
 - Rasio lebar profil wajah: `forehead_to_cheek_ratio`, `upper_forehead_to_cheek_ratio`, `temple_to_cheek_ratio`, `jaw_to_cheek_ratio`, `lower_jaw_to_cheek_ratio`, `chin_to_cheek_ratio`, `jaw_to_forehead_ratio`, `chin_to_jaw_ratio`, `chin_to_forehead_ratio`.
 - Sudut & kelengkungan: sudut rahang kiri/kanan/rata-rata, sudut dagu, kelengkungan dahi, kemiringan tirus rahang/pipi, variasi lebar (`width_std_ratio`), dan rasio simetri.
 - Standarisasi Z-score terhadap statistik train split:
-  $$\tilde{g}_i = \operatorname{clip}\!\left(\frac{g_i - \mu_i}{\sigma_i},\; -5,\; 5\right)$$
+
+  $$
+  \tilde{g}_i = \mathrm{clip}\left(\frac{g_i - \mu_i}{\sigma_i}, -5, 5\right)
+  $$
 
 ### 2.3 3-View Test-Time Augmentation (TTA) & Softmax Probabilitas
 Model menjalankan 3 inferensi paralel (original, cermin horizontal dengan penukaran sudut rahang kiri↔kanan, dan center zoom 92%) lalu menggabungkan logit-nya:
-$$\mathbf{z}_{\text{TTA}} = 0.45\,\mathbf{z}_{\text{orig}} + 0.35\,\mathbf{z}_{\text{flip}} + 0.20\,\mathbf{z}_{\text{zoom}}$$
+
+$$
+\mathbf{z}_{\text{TTA}} = 0.45 \mathbf{z}_{\text{orig}} + 0.35 \mathbf{z}_{\text{flip}} + 0.20 \mathbf{z}_{\text{zoom}}
+$$
 
 Probabilitas masing-masing dari 5 kelas dihitung dengan **Temperature-Scaled Softmax** ($T = 1.0$, jumlah total selalu 100%):
-$$P(y = k \mid x) = \frac{\exp(z_k / T)}{\sum_{j=1}^{5} \exp(z_j / T)}$$
+
+$$
+P(y = k \mid x) = \frac{\exp(z_k / T)}{\sum_{j=1}^{5} \exp(z_j / T)}
+$$
 
 - **`face_shape` & `confidence`**: kelas peringkat #1 beserta probabilitasnya (ditampilkan di UI sebagai `% Cocok`).
 - **`predictions[1]`**: kelas peringkat #2 (ditampilkan di UI sebagai `Alternatif: ... (%)`).
@@ -88,11 +97,17 @@ $$P(y = k \mid x) = \frac{\exp(z_k / T)}{\sum_{j=1}^{5} \exp(z_j / T)}$$
 
 Output `face_shape` dan `confidence` dari API ini dikirim ke `recommendationEngine.ts` di frontend untuk menghitung skor kecocokan (**`% Match`**) seluruh 15 gaya rambut:
 
-$$S_{\text{wajah}} = \min\!\Big(1.0,\; \text{compat}_{\text{wajah}} \times (0.85 + 0.15 \times \text{confidence})\Big)$$
+$$
+S_{\text{wajah}} = \min\Big(1.0, \text{compat}_{\text{wajah}} \times (0.85 + 0.15 \times \text{confidence})\Big)
+$$
 
-$$S_{\text{total}} = (0.50 \times S_{\text{wajah}}) + (0.25 \times S_{\text{tekstur}}) + (0.15 \times S_{\text{panjang}}) + (0.10 \times S_{\text{kesan}})$$
+$$
+S_{\text{total}} = (0.50 \times S_{\text{wajah}}) + (0.25 \times S_{\text{tekstur}}) + (0.15 \times S_{\text{panjang}}) + (0.10 \times S_{\text{kesan}})
+$$
 
-$$\text{Match (\%)} = \min\!\Big(98,\; \max\!\big(70,\; \operatorname{round}(S_{\text{total}} \times 100)\big)\Big)$$
+$$
+\text{Match (\%)} = \min\Big(98, \max\big(70, \mathrm{round}(S_{\text{total}} \times 100)\big)\Big)
+$$
 
 - Saat filter **Panjang** / **Tekstur** = **`Semua`**: nilai netral `0.85` (Kesan default `0.90`).
 - Saat filter dipilih & **cocok**: naik menjadi **`1.00`** (sehingga `% Match` meningkat).
